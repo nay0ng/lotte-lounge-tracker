@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>롯백 당번 달력</title>
+<title>롯백 라운지 당번</title>
 <!-- 파비콘: 이미지 파일 없이 이모지 하나를 SVG로 감싸서 아이콘처럼 씀 (탭에 뜨는 그 작은 아이콘) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>" />
 <style>
@@ -12,9 +12,14 @@
     --bg: #FAF9F7; --card: #FFFFFF; --line: #F0EDE8;
     --ink: #3D3A36; --ink-soft: #A8A39B; --pink-bg: #FDEEF4;
     /* 사람 3명의 색: 여기만 바꾸면 전체 색이 바뀝니다 */
-    --p1: #F4B63F; --p1-bg: #FEF3D9;  /* 1번: 노랑 */
-    --p2: #E85D8A; --p2-bg: #FDEEF4;  /* 2번: 핑크 */
-    --p3: #5A9CE0; --p3-bg: #E9F2FC;  /* 3번: 파랑 */
+    --p1: #F4B63F; --p1-bg: #FEF3D9;  /* 1번: 노랑 (통계 카드/글자색용, 진한 톤 그대로) */
+    --p2: #E85D8A; --p2-bg: #FDEEF4;  /* 2번: 핑크 (통계 카드/글자색용, 진한 톤 그대로) */
+    --p3: #5A9CE0; --p3-bg: #E9F2FC;  /* 3번: 파랑 (통계 카드/글자색용, 진한 톤 그대로) */
+    /* 달력 칸에 실제로 칠해지는 색은 여기서 더 연하게(파스텔) 따로 뺐어요 */
+    --p1-day: #FBE2A6;  /* 1번 달력 칸: 연한 노랑 */
+    --p2-day: #F6BBD3;  /* 2번 달력 칸: 연한 핑크 */
+    --p3-day: #BBD9F5;  /* 3번 달력 칸: 연한 파랑 */
+    --off: #1A1817; --off-bg: #ECEAE6;  /* 라운지 휴무: 검정 */
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -78,9 +83,11 @@
   .day:active { transform: scale(0.94); }
   .day.blank { border: none; background: none; cursor: default; }
   .day.today { border: 2px solid var(--ink); }
-  .day.p1 { background: var(--p1); border-color: var(--p1); color: #fff; }
-  .day.p2 { background: var(--p2); border-color: var(--p2); color: #fff; }
-  .day.p3 { background: var(--p3); border-color: var(--p3); color: #fff; }
+  /* 파스텔 톤이라 배경이 밝아서, 글자색은 흰색 대신 진한 잉크색(--ink)으로 해야 잘 보여요 */
+  .day.p1 { background: var(--p1-day); border-color: var(--p1-day); color: var(--ink); }
+  .day.p2 { background: var(--p2-day); border-color: var(--p2-day); color: var(--ink); }
+  .day.p3 { background: var(--p3-day); border-color: var(--p3-day); color: var(--ink); }
+  .day.off { background: var(--off); border-color: var(--off); color: #fff; } /* 라운지 휴무일: 검정이라 흰 글자 유지 */
   .day .who { font-size: 9px; font-weight: 700; opacity: .9; }
 
   /* ===== 날짜 누르면 뜨는 '이름 고르기' 작은 팝업 ===== */
@@ -114,9 +121,9 @@
 <div class="app">
 
   <div class="header-card">
-    <span class="tag">🛍️ Lotbaek × Notion</span>
-    <h1>롯백 당번 달력</h1>
-    <p>날짜 칸을 누르면 색이 바뀌어요 · 기록은 Notion DB에 저장돼서 셋이 함께 볼 수 있어요</p>
+    <span class="tag">🛍️ Lounge Duty × Notion</span>
+    <h1>롯백 라운지 당번</h1>
+    <p>날짜 칸을 누르면 이름을 고를 수 있어요 · 기록은 Notion DB에 저장돼서 셋이 함께 볼 수 있어요</p>
   </div>
 
   <div class="stats">
@@ -148,6 +155,7 @@
    이 이름이 그대로 Notion의 '사람' 선택지로 저장됩니다.
    ========================================================= */
 const NAMES = ['민선', '민상', '나영']; // ← 원하는 이름으로 수정
+const OFF = '휴무'; // ← 라운지 문 닫는 날 표시용. NAMES에는 안 넣음 (당번 횟수 집계에서 빠지게)
 
 /* =========================================================
    달라진 점 (localStorage 버전 → Notion 버전)
@@ -201,6 +209,12 @@ function openPicker(key, dayEl, evt) {
     btn.onclick = (e) => { e.stopPropagation(); selectPerson(key, name); };
     picker.appendChild(btn);
   });
+
+  // 라운지 휴무 버튼 (사람이 아니라 '오늘은 문 닫음' 표시)
+  const offBtn = document.createElement('button');
+  offBtn.innerHTML = `<span class="swatch" style="background:var(--off)"></span>${OFF}`;
+  offBtn.onclick = (e) => { e.stopPropagation(); selectPerson(key, OFF); };
+  picker.appendChild(offBtn);
 
   // 기록 지우는 버튼
   const clearBtn = document.createElement('button');
@@ -276,6 +290,7 @@ function render() {
 
     const classes = ['day'];
     if (personIdx >= 0) classes.push('p' + (personIdx + 1)); // p1/p2/p3 색
+    else if (who === OFF) classes.push('off');               // 라운지 휴무일은 검정색
     if (key === todayKey) classes.push('today');
 
     const whoLabel = who ? `<span class="who">${who}</span>` : '';
