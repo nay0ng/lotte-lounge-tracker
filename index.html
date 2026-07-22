@@ -12,7 +12,7 @@
     --bg: #FBF9F6; --card: #FFFFFF; --line: #F0EDE8;
     --ink: #34302C; --ink-soft: #9C9690;
     --accent: #D45C88; --accent-bg: #FCEEF2;  /* 강조 핑크: 뱃지 글자/일요일 글자/판정 배너 */
-    --ring: #D6D1C8;   /* 오늘 날짜 칸에 두르는 은은한 링 색 */
+    --today: #EB5F42;  /* 오늘 날짜 숫자 뒤 동그라미 색 (코랄톤) */
     --nav-bg: #F5F3EF; --nav-bg-hover: #EFEBE4;
     --card-shadow: 0 1px 2px rgba(52,48,44,0.04), 0 10px 28px rgba(52,48,44,0.05);
     /* 사람 3명의 색: 여기만 바꾸면 전체 색이 바뀝니다 (통계 카드/점 색은 진하게, 달력 칸은 연하게) */
@@ -38,9 +38,10 @@
     display: inline-flex; gap: 6px;
     background: var(--accent-bg); color: var(--accent);
     font-size: 12px; font-weight: 700; padding: 6px 13px; border-radius: 999px;
+    letter-spacing: 0.01em;
   }
-  .header-card h1 { font-size: 24px; font-weight: 800; margin-top: 10px; }
-  .header-card p { font-size: 13px; color: var(--ink-soft); margin-top: 5px; }
+  .header-card h1 { font-size: 26px; font-weight: 800; margin-top: 12px; letter-spacing: -0.02em; }
+  .header-card p { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.55; }
 
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin-bottom: 16px; }
   .stat { border-radius: 18px; padding: 16px 16px 15px; }
@@ -69,13 +70,13 @@
   }
   .cal-head button:hover { background: var(--nav-bg-hover); }
 
-  .weekdays, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .weekdays, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 9px; }
   .weekdays div { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-soft); padding-bottom: 6px; }
   .weekdays div:first-child { color: var(--accent); }
 
   /* 날짜 칸: 이름이 있든 없든 숫자 위치가 항상 같은 자리에 오도록 위쪽 정렬로 고정 */
   .day {
-    aspect-ratio: 1; border-radius: 14px;
+    aspect-ratio: 1; border-radius: 18px;
     background: var(--card); color: var(--ink);
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding-top: 10%; gap: 1px; cursor: pointer; font-size: 13px; font-weight: 600;
@@ -88,8 +89,12 @@
   }
   .day:active { transform: scale(0.94); }
   .day.blank { background: none; cursor: default; }
-  /* 오늘 날짜: 꽉 찬 색 대신 은은한 링(안쪽 테두리)만 살짝 둘러서 튀지 않게 표시 */
-  .day.today { box-shadow: inset 0 0 0 2px var(--ring); }
+  /* 오늘 날짜: 숫자 뒤에 코랄색 동그라미 + 옅은 그림자를 깔아서, 배경색이 뭐든 항상 또렷하게 보여요 */
+  .day.today .daynum {
+    background: var(--today); color: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(235,95,66,0.45);
+  }
   .day.p1 { background: var(--p1-day); }
   .day.p2 { background: var(--p2-day); }
   .day.p3 { background: var(--p3-day); }
