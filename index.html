@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>롯백 당번 달력</title>
+<style>
+  /* ===== 파스텔 위젯 스타일 (이전 버전과 동일) ===== */
+  :root {
+    --bg: #FAF9F7; --card: #FFFFFF; --line: #F0EDE8;
+    --ink: #3D3A36; --ink-soft: #A8A39B; --pink-bg: #FDEEF4;
+    /* 사람 3명의 색: 여기만 바꾸면 전체 색이 바뀝니다 */
+    --p1: #F4B63F; --p1-bg: #FEF3D9;  /* 1번: 노랑 */
+    --p2: #E85D8A; --p2-bg: #FDEEF4;  /* 2번: 핑크 */
+    --p3: #5A9CE0; --p3-bg: #E9F2FC;  /* 3번: 파랑 */
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;
+    display: flex; justify-content: center;
+    padding: 20px 14px 60px; min-height: 100vh;
+  }
+  .app { width: 100%; max-width: 720px; }
+
+  .header-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 22px 24px; margin-bottom: 14px;
+  }
+  .header-card .tag {
+    display: inline-flex; gap: 6px;
+    background: var(--pink-bg); color: var(--p2);
+    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+  }
+  .header-card h1 { font-size: 24px; font-weight: 800; margin-top: 10px; }
+  .header-card p { font-size: 13px; color: var(--ink-soft); margin-top: 5px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .stat:nth-child(1) { background: var(--p1-bg); }
+  .stat:nth-child(2) { background: var(--p2-bg); }
+  .stat:nth-child(3) { background: var(--p3-bg); }
+  .stat .name { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .stat .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .stat:nth-child(1) .swatch { background: var(--p1); }
+  .stat:nth-child(2) .swatch { background: var(--p2); }
+  .stat:nth-child(3) .swatch { background: var(--p3); }
+  .stat .value { font-size: 22px; font-weight: 800; margin-top: 6px; }
+  .stat .sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  .cal-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 20px; margin-bottom: 14px;
+  }
+  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .cal-head .month { font-size: 18px; font-weight: 800; }
+  .cal-head .nav { display: flex; gap: 6px; }
+  .cal-head button {
+    width: 34px; height: 34px; border: 1px solid var(--line);
+    background: var(--card); border-radius: 10px;
+    font-size: 15px; cursor: pointer; color: var(--ink);
+  }
+  .cal-head button:hover { background: var(--bg); }
+
+  .weekdays, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .weekdays div { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-soft); padding-bottom: 6px; }
+  .weekdays div:first-child { color: var(--p2); }
+
+  .day {
+    aspect-ratio: 1; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--card);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: transform .1s ease;
+  }
+  .day:active { transform: scale(0.94); }
+  .day.blank { border: none; background: none; cursor: default; }
+  .day.today { border: 2px solid var(--ink); }
+  .day.p1 { background: var(--p1); border-color: var(--p1); color: #fff; }
+  .day.p2 { background: var(--p2); border-color: var(--p2); color: #fff; }
+  .day.p3 { background: var(--p3); border-color: var(--p3); color: #fff; }
+  .day.saving { opacity: .5; } /* 저장 중인 칸은 반투명하게 */
+  .day .who { font-size: 9px; font-weight: 700; opacity: .9; }
+
+  .cal-tip { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 12px; }
+  .tip { background: var(--pink-bg); border-radius: 14px; padding: 13px 18px; font-size: 12px; color: #B4547A; }
+
+  /* 로딩/에러 표시 */
+  .status { text-align: center; font-size: 12px; color: var(--ink-soft); padding: 30px 0; }
+  .status.error { color: var(--p2); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header-card">
+    <span class="tag">🛍️ Lotbaek × Notion</span>
+    <h1>롯백 당번 달력</h1>
+    <p>날짜 칸을 누르면 색이 바뀌어요 · 기록은 Notion DB에 저장돼서 셋이 함께 볼 수 있어요</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="name"><span class="swatch"></span><span id="nameP1"></span></div><div class="value" id="countP1">0회</div><div class="sub">이번 달 기준</div></div>
+    <div class="stat"><div class="name"><span class="swatch"></span><span id="nameP2"></span></div><div class="value" id="countP2">0회</div><div class="sub">이번 달 기준</div></div>
+    <div class="stat"><div class="name"><span class="swatch"></span><span id="nameP3"></span></div><div class="value" id="countP3">0회</div><div class="sub">이번 달 기준</div></div>
+  </div>
+
+  <div class="cal-card">
+    <div class="cal-head">
+      <div class="month" id="monthLabel">-</div>
+      <div class="nav">
+        <button onclick="moveMonth(-1)" aria-label="이전 달">‹</button>
+        <button onclick="moveMonth(1)" aria-label="다음 달">›</button>
+      </div>
+    </div>
+    <div class="weekdays"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+    <div class="days" id="daysGrid"><div class="status">Notion에서 기록을 불러오는 중…</div></div>
+    <div class="cal-tip">누를 때마다 없음 → <b>1번</b> → <b>2번</b> → <b>3번</b> → 없음 순서로 바뀌어요</div>
+  </div>
+
+  <div class="tip" id="verdict">💡 불러오는 중…</div>
+
+</div>
+
+<script>
+/* =========================================================
+   ★ 여기서 세 명의 이름을 정하세요! ★
+   이 이름이 그대로 Notion의 '사람' 선택지로 저장됩니다.
+   ========================================================= */
+const NAMES = ['나영', '민선', '민상']; // ← 원하는 이름으로 수정
+
+/* =========================================================
+   달라진 점 (localStorage 버전 → Notion 버전)
+   - 전에는 브라우저 서랍(localStorage)에서 바로 꺼냈지만,
+     이제는 /api/visits 심부름꾼에게 부탁해서 Notion에 다녀옵니다.
+   - 인터넷을 다녀와야 하므로 모든 함수 앞에 async/await가 붙습니다.
+     (async/await = "다녀올 때까지 잠깐 기다려" 표시)
+   ========================================================= */
+
+let visits = {};  // { '2026-07-22': '나', ... } — 서버에서 받아온 기록의 복사본
+let viewYear, viewMonth;
+{
+  const now = new Date();
+  viewYear = now.getFullYear();
+  viewMonth = now.getMonth();
+}
+
+function dateKey(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+/* ---------- 서버(심부름꾼)에서 전체 기록 받아오기 ---------- */
+async function fetchVisits() {
+  const res = await fetch('/api/visits');       // 심부름꾼 호출
+  if (!res.ok) throw new Error('서버 응답 오류');
+  const data = await res.json();
+  visits = data.visits;                          // 받아온 기록을 복사본에 저장
+}
+
+/* ---------- 날짜 칸 클릭: 없음 → 1번 → 2번 → 3번 → 없음 ---------- */
+async function cycleDay(key, el) {
+  const current = visits[key];
+  let next;
+  if (!current) next = NAMES[0];                        // 비어있으면 1번
+  else {
+    const idx = NAMES.indexOf(current) + 1;             // 다음 사람
+    next = idx >= NAMES.length ? null : NAMES[idx];     // 3번 다음은 없음(null)
+  }
+
+  // ★ 낙관적 업데이트: 서버 응답을 기다리지 않고 화면부터 먼저 바꿉니다.
+  //   (안 그러면 누를 때마다 1초씩 굳어서 답답해요)
+  if (next) visits[key] = next; else delete visits[key];
+  render();
+  if (el) el.classList.add('saving'); // 저장 중 표시
+
+  try {
+    // 서버에 진짜 저장 요청
+    const res = await fetch('/api/visits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: key, who: next }),
+    });
+    if (!res.ok) throw new Error('저장 실패');
+  } catch (e) {
+    // 실패하면 서버 기준으로 되돌리기 (화면과 서버가 어긋나면 안 되니까)
+    alert('저장에 실패했어요. 인터넷 연결을 확인해주세요!');
+    await fetchVisits();
+  }
+  render();
+}
+
+function moveMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+  render();
+}
+
+/* ---------- 화면 그리기 (로직은 이전 버전과 동일) ---------- */
+function render() {
+  const now = new Date();
+  const todayKey = dateKey(now.getFullYear(), now.getMonth(), now.getDate());
+
+  document.getElementById('monthLabel').textContent = `${viewYear}년 ${viewMonth + 1}월`;
+  document.getElementById('nameP1').textContent = NAMES[0];
+  document.getElementById('nameP2').textContent = NAMES[1];
+  document.getElementById('nameP3').textContent = NAMES[2];
+
+  const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+  const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  let html = '';
+  for (let i = 0; i < firstWeekday; i++) html += '<div class="day blank"></div>';
+
+  const monthCount = [0, 0, 0]; // NAMES 순서대로 이번 달 횟수
+
+  for (let d = 1; d <= lastDate; d++) {
+    const key = dateKey(viewYear, viewMonth, d);
+    const who = visits[key];
+    const personIdx = NAMES.indexOf(who); // 0,1,2 또는 -1(기록 없음)
+    if (personIdx >= 0) monthCount[personIdx]++;
+
+    const classes = ['day'];
+    if (personIdx >= 0) classes.push('p' + (personIdx + 1)); // p1/p2/p3 색
+    if (key === todayKey) classes.push('today');
+
+    const whoLabel = who ? `<span class="who">${who}</span>` : '';
+    // this = 방금 누른 그 칸(엘리먼트)을 cycleDay에 넘겨서 '저장 중' 표시용으로 씀
+    html += `<div class="${classes.join(' ')}" onclick="cycleDay('${key}', this)">${d}${whoLabel}</div>`;
+  }
+  document.getElementById('daysGrid').innerHTML = html;
+
+  document.getElementById('countP1').textContent = monthCount[0] + '회';
+  document.getElementById('countP2').textContent = monthCount[1] + '회';
+  document.getElementById('countP3').textContent = monthCount[2] + '회';
+
+  // 판정 배너
+  const total = monthCount[0] + monthCount[1] + monthCount[2];
+  const verdict = document.getElementById('verdict');
+  if (total === 0) {
+    verdict.textContent = '💡 아직 이번 달 기록이 없어요. 날짜 칸을 눌러 기록해보세요!';
+  } else {
+    // 횟수와 이름을 짝지어 정렬해서 최소/최대 찾기
+    const pairs = NAMES.map((n, i) => ({ name: n, count: monthCount[i] }))
+                       .sort((a, b) => a.count - b.count);
+    const least = pairs[0], most = pairs[2];
+    verdict.textContent = least.count === most.count
+      ? '⚖️ 이번 달은 모두 공평하게 다녀왔어요!'
+      : `💡 이번 달 최다 방문은 ${most.name}(${most.count}회)! 다음 차례는 ${least.name}(${least.count}회) 추천`;
+  }
+}
+
+/* ---------- 시작: 기록 불러오고 첫 화면 그리기 ---------- */
+(async function init() {
+  try {
+    await fetchVisits();
+    render();
+  } catch (e) {
+    document.getElementById('daysGrid').innerHTML =
+      '<div class="status error">Notion 연결에 실패했어요 😢<br>Vercel 환경변수(NOTION_TOKEN, NOTION_DATABASE_ID)를 확인해주세요</div>';
+    document.getElementById('verdict').textContent = '⚠️ 연결 설정을 확인해주세요';
+  }
+})();
+</script>
+</body>
+</html>
