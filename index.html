@@ -80,6 +80,8 @@
     gap: 2px; cursor: pointer; font-size: 13px; font-weight: 600;
     transition: transform .1s ease;
   }
+  /* 오늘 날짜 숫자만 빨간색으로 (이름 색이 칠해진 칸이어도 숫자는 항상 빨갛게 보이도록 우선순위 높임) */
+  .day.today .daynum { color: #E4483F; }
   .day:active { transform: scale(0.94); }
   .day.blank { border: none; background: none; cursor: default; }
   .day.today { border: 2px solid var(--ink); }
@@ -295,7 +297,8 @@ function render() {
 
     const whoLabel = who ? `<span class="who">${who}</span>` : '';
     // this = 방금 누른 그 칸(엘리먼트), event = 클릭 이벤트 → 팝업 위치/버블링 제어에 씀
-    html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)">${d}${whoLabel}</div>`;
+    // 날짜 숫자를 <span class="daynum">으로 감싸서, 오늘이면 이 숫자만 빨갛게 칠할 수 있게 함
+    html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)"><span class="daynum">${d}</span>${whoLabel}</div>`;
   }
   document.getElementById('daysGrid').innerHTML = html;
 
