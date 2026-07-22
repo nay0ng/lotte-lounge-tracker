@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>롯백 당번 달력</title>
+<!-- 파비콘: 이미지 파일 없이 이모지 하나를 SVG로 감싸서 아이콘처럼 씀 (탭에 뜨는 그 작은 아이콘) -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>" />
 <style>
   /* ===== 파스텔 위젯 스타일 (이전 버전과 동일) ===== */
   :root {
@@ -79,8 +81,26 @@
   .day.p1 { background: var(--p1); border-color: var(--p1); color: #fff; }
   .day.p2 { background: var(--p2); border-color: var(--p2); color: #fff; }
   .day.p3 { background: var(--p3); border-color: var(--p3); color: #fff; }
-  .day.saving { opacity: .5; } /* 저장 중인 칸은 반투명하게 */
   .day .who { font-size: 9px; font-weight: 700; opacity: .9; }
+
+  /* ===== 날짜 누르면 뜨는 '이름 고르기' 작은 팝업 ===== */
+  .picker {
+    position: absolute; z-index: 50;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 104px;
+  }
+  .picker button {
+    border: none; background: none; border-radius: 10px;
+    padding: 9px 10px; font-size: 13px; font-weight: 700;
+    text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .picker button:hover { background: var(--bg); }
+  .picker .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .picker .clear { color: var(--ink-soft); border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; }
 
   .cal-tip { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 12px; }
   .tip { background: var(--pink-bg); border-radius: 14px; padding: 13px 18px; font-size: 12px; color: #B4547A; }
@@ -115,7 +135,7 @@
     </div>
     <div class="weekdays"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
     <div class="days" id="daysGrid"><div class="status">Notion에서 기록을 불러오는 중…</div></div>
-    <div class="cal-tip">누를 때마다 없음 → <b>1번</b> → <b>2번</b> → <b>3번</b> → 없음 순서로 바뀌어요</div>
+    <div class="cal-tip">날짜 칸을 누르면 이름을 고르는 작은 창이 떠요</div>
   </div>
 
   <div class="tip" id="verdict">💡 불러오는 중…</div>
@@ -127,7 +147,7 @@
    ★ 여기서 세 명의 이름을 정하세요! ★
    이 이름이 그대로 Notion의 '사람' 선택지로 저장됩니다.
    ========================================================= */
-const NAMES = ['나영', '민선', '민상']; // ← 원하는 이름으로 수정
+const NAMES = ['민선', '민상', '나영']; // ← 원하는 이름으로 수정
 
 /* =========================================================
    달라진 점 (localStorage 버전 → Notion 버전)
@@ -157,21 +177,55 @@ async function fetchVisits() {
   visits = data.visits;                          // 받아온 기록을 복사본에 저장
 }
 
-/* ---------- 날짜 칸 클릭: 없음 → 1번 → 2번 → 3번 → 없음 ---------- */
-async function cycleDay(key, el) {
-  const current = visits[key];
-  let next;
-  if (!current) next = NAMES[0];                        // 비어있으면 1번
-  else {
-    const idx = NAMES.indexOf(current) + 1;             // 다음 사람
-    next = idx >= NAMES.length ? null : NAMES[idx];     // 3번 다음은 없음(null)
-  }
+/* ---------- 지금 열려있는 '이름 고르기' 팝업 (한 번에 하나만 뜨게 관리) ---------- */
+let openPickerEl = null;
+
+function closePicker() {
+  if (openPickerEl) { openPickerEl.remove(); openPickerEl = null; }
+}
+// 팝업 바깥 아무 데나 누르면 자동으로 닫히게
+document.addEventListener('click', closePicker);
+
+/* ---------- 날짜 칸 클릭: 회전 대신 이름 3개 + '비우기' 를 바로 고르는 팝업 ---------- */
+function openPicker(key, dayEl, evt) {
+  evt.stopPropagation(); // 이 클릭이 document까지 올라가서 방금 띄운 팝업을 바로 닫아버리는 걸 막음
+  closePicker();          // 혹시 다른 칸에서 열려있던 팝업이 있으면 먼저 정리
+
+  const picker = document.createElement('div');
+  picker.className = 'picker';
+
+  // 이름 버튼 3개 (사람별 색깔 점 표시)
+  NAMES.forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.innerHTML = `<span class="swatch" style="background:var(--p${i + 1})"></span>${name}`;
+    btn.onclick = (e) => { e.stopPropagation(); selectPerson(key, name); };
+    picker.appendChild(btn);
+  });
+
+  // 기록 지우는 버튼
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'clear';
+  clearBtn.textContent = '✕ 비우기';
+  clearBtn.onclick = (e) => { e.stopPropagation(); selectPerson(key, null); };
+  picker.appendChild(clearBtn);
+
+  // 누른 날짜 칸 바로 밑에 팝업 위치시키기
+  const rect = dayEl.getBoundingClientRect();
+  picker.style.left = `${rect.left + window.scrollX}px`;
+  picker.style.top = `${rect.bottom + window.scrollY + 6}px`;
+
+  document.body.appendChild(picker);
+  openPickerEl = picker;
+}
+
+/* ---------- 팝업에서 고른 이름을 실제로 저장 ---------- */
+async function selectPerson(key, next) {
+  closePicker();
 
   // ★ 낙관적 업데이트: 서버 응답을 기다리지 않고 화면부터 먼저 바꿉니다.
-  //   (안 그러면 누를 때마다 1초씩 굳어서 답답해요)
+  //   (안 그러면 고를 때마다 1초씩 굳어서 답답해요)
   if (next) visits[key] = next; else delete visits[key];
   render();
-  if (el) el.classList.add('saving'); // 저장 중 표시
 
   try {
     // 서버에 진짜 저장 요청
@@ -225,8 +279,8 @@ function render() {
     if (key === todayKey) classes.push('today');
 
     const whoLabel = who ? `<span class="who">${who}</span>` : '';
-    // this = 방금 누른 그 칸(엘리먼트)을 cycleDay에 넘겨서 '저장 중' 표시용으로 씀
-    html += `<div class="${classes.join(' ')}" onclick="cycleDay('${key}', this)">${d}${whoLabel}</div>`;
+    // this = 방금 누른 그 칸(엘리먼트), event = 클릭 이벤트 → 팝업 위치/버블링 제어에 씀
+    html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)">${d}${whoLabel}</div>`;
   }
   document.getElementById('daysGrid').innerHTML = html;
 
