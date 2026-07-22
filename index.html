@@ -80,10 +80,12 @@
     gap: 2px; cursor: pointer; font-size: 13px; font-weight: 600;
     transition: transform .1s ease;
   }
-  /* 오늘 날짜: 숫자 밑에 작은 빨간 점 하나만 콕 찍어서 표시 */
-  .today-dot {
-    width: 4px; height: 4px; border-radius: 50%;
-    background: #E4483F; margin: 0 auto;
+  /* 오늘 날짜: 애플 캘린더처럼 숫자 뒤에 빨간 동그라미를 깔아줌 (이름 색 배경이어도 항상 위에 보이게) */
+  .day.today .daynum {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px;
+    background: #E4483F; color: #fff;
+    border-radius: 50%; font-weight: 800;
   }
   .day:active { transform: scale(0.94); }
   .day.blank { border: none; background: none; cursor: default; }
@@ -299,9 +301,9 @@ function render() {
     if (key === todayKey) classes.push('today');
 
     const whoLabel = who ? `<span class="who">${who}</span>` : '';
-    const todayDot = key === todayKey ? '<span class="today-dot"></span>' : ''; // 오늘 칸 숫자 밑에만 작은 빨간 점
     // this = 방금 누른 그 칸(엘리먼트), event = 클릭 이벤트 → 팝업 위치/버블링 제어에 씀
-    html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)">${d}${todayDot}${whoLabel}</div>`;
+    // 날짜 숫자를 <span class="daynum">으로 감싸서, 오늘이면 이 숫자만 동그라미로 표시할 수 있게 함
+    html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)"><span class="daynum">${d}</span>${whoLabel}</div>`;
   }
   document.getElementById('daysGrid').innerHTML = html;
 
