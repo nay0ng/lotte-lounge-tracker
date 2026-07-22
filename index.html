@@ -7,19 +7,19 @@
 <!-- 파비콘: 이미지 파일 없이 이모지 하나를 SVG로 감싸서 아이콘처럼 씀 (탭에 뜨는 그 작은 아이콘) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>" />
 <style>
-  /* ===== 파스텔 위젯 스타일 (이전 버전과 동일) ===== */
+  /* ===== 더 다듬은 파스텔 스타일: 카드에 은은한 그림자, 채도 낮춘 색감 ===== */
   :root {
-    --bg: #FAF9F7; --card: #FFFFFF; --line: #F0EDE8;
-    --ink: #3D3A36; --ink-soft: #A8A39B; --pink-bg: #FDEEF4;
-    /* 사람 3명의 색: 여기만 바꾸면 전체 색이 바뀝니다 */
-    --p1: #F4B63F; --p1-bg: #FEF3D9;  /* 1번: 노랑 (통계 카드/글자색용, 진한 톤 그대로) */
-    --p2: #E85D8A; --p2-bg: #FDEEF4;  /* 2번: 핑크 (통계 카드/글자색용, 진한 톤 그대로) */
-    --p3: #5A9CE0; --p3-bg: #E9F2FC;  /* 3번: 파랑 (통계 카드/글자색용, 진한 톤 그대로) */
-    /* 달력 칸에 실제로 칠해지는 색은 여기서 더 연하게(파스텔) 따로 뺐어요 */
-    --p1-day: #FBE2A6;  /* 1번 달력 칸: 연한 노랑 */
-    --p2-day: #F6BBD3;  /* 2번 달력 칸: 연한 핑크 */
-    --p3-day: #BBD9F5;  /* 3번 달력 칸: 연한 파랑 */
-    --off: #1A1817; --off-bg: #ECEAE6;  /* 라운지 휴무: 검정 */
+    --bg: #FBF9F6; --card: #FFFFFF; --line: #F0EDE8;
+    --ink: #34302C; --ink-soft: #9C9690;
+    --accent: #D45C88; --accent-bg: #FCEEF2;  /* 강조 핑크: 뱃지 글자/일요일 글자/판정 배너 */
+    --ring: #D6D1C8;   /* 오늘 날짜 칸에 두르는 은은한 링 색 */
+    --nav-bg: #F5F3EF; --nav-bg-hover: #EFEBE4;
+    --card-shadow: 0 1px 2px rgba(52,48,44,0.04), 0 10px 28px rgba(52,48,44,0.05);
+    /* 사람 3명의 색: 여기만 바꾸면 전체 색이 바뀝니다 (통계 카드/점 색은 진하게, 달력 칸은 연하게) */
+    --p1: #E8A93A; --p1-bg: #FBEFD6; --p1-day: #F6DFA0; /* 1번: 노랑 */
+    --p2: #E0688F; --p2-bg: #FCEEF2; --p2-day: #F5C2D6; /* 2번: 핑크 */
+    --p3: #4E90D9; --p3-bg: #EAF2FC; --p3-day: #C4DCF5; /* 3번: 파랑 */
+    --off: #211E1B; /* 라운지 휴무: 검정 */
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -31,19 +31,19 @@
   .app { width: 100%; max-width: 720px; }
 
   .header-card {
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 20px; padding: 22px 24px; margin-bottom: 14px;
+    background: var(--card); box-shadow: var(--card-shadow);
+    border-radius: 24px; padding: 26px 26px 24px; margin-bottom: 16px;
   }
   .header-card .tag {
     display: inline-flex; gap: 6px;
-    background: var(--pink-bg); color: var(--p2);
-    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+    background: var(--accent-bg); color: var(--accent);
+    font-size: 12px; font-weight: 700; padding: 6px 13px; border-radius: 999px;
   }
   .header-card h1 { font-size: 24px; font-weight: 800; margin-top: 10px; }
   .header-card p { font-size: 13px; color: var(--ink-soft); margin-top: 5px; }
 
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
-  .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin-bottom: 16px; }
+  .stat { border-radius: 18px; padding: 16px 16px 15px; }
   .stat:nth-child(1) { background: var(--p1-bg); }
   .stat:nth-child(2) { background: var(--p2-bg); }
   .stat:nth-child(3) { background: var(--p3-bg); }
@@ -56,55 +56,55 @@
   .stat .sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
 
   .cal-card {
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 20px; padding: 20px; margin-bottom: 14px;
+    background: var(--card); box-shadow: var(--card-shadow);
+    border-radius: 24px; padding: 22px; margin-bottom: 16px;
   }
-  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .cal-head .month { font-size: 18px; font-weight: 800; }
   .cal-head .nav { display: flex; gap: 6px; }
   .cal-head button {
-    width: 34px; height: 34px; border: 1px solid var(--line);
-    background: var(--card); border-radius: 10px;
+    width: 34px; height: 34px; border: none;
+    background: var(--nav-bg); border-radius: 11px;
     font-size: 15px; cursor: pointer; color: var(--ink);
   }
-  .cal-head button:hover { background: var(--bg); }
+  .cal-head button:hover { background: var(--nav-bg-hover); }
 
   .weekdays, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .weekdays div { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-soft); padding-bottom: 6px; }
-  .weekdays div:first-child { color: var(--p2); }
+  .weekdays div:first-child { color: var(--accent); }
 
+  /* 날짜 칸: 이름이 있든 없든 숫자 위치가 항상 같은 자리에 오도록 위쪽 정렬로 고정 */
   .day {
-    aspect-ratio: 1; border: 1px solid var(--line); border-radius: 12px;
-    background: var(--card);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; cursor: pointer; font-size: 13px; font-weight: 600;
-    transition: transform .1s ease;
+    aspect-ratio: 1; border-radius: 14px;
+    background: var(--card); color: var(--ink);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding-top: 10%; gap: 1px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: transform .1s ease, box-shadow .15s ease;
   }
-  /* 오늘 날짜: 애플 캘린더처럼 숫자 뒤에 빨간 동그라미를 깔아줌 (이름 색 배경이어도 항상 위에 보이게) */
-  .day.today .daynum {
+  /* 날짜 숫자는 항상 같은 크기의 네모 안에 (이름 유무와 상관없이 흔들리지 않게) */
+  .day .daynum {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px;
-    background: #E4483F; color: #fff;
-    border-radius: 50%; font-weight: 800;
+    width: 23px; height: 23px; font-weight: 700; font-size: 13px;
   }
   .day:active { transform: scale(0.94); }
-  .day.blank { border: none; background: none; cursor: default; }
-  .day.today { border: 2px solid var(--ink); }
-  /* 파스텔 톤이라 배경이 밝아서, 글자색은 흰색 대신 진한 잉크색(--ink)으로 해야 잘 보여요 */
-  .day.p1 { background: var(--p1-day); border-color: var(--p1-day); color: var(--ink); }
-  .day.p2 { background: var(--p2-day); border-color: var(--p2-day); color: var(--ink); }
-  .day.p3 { background: var(--p3-day); border-color: var(--p3-day); color: var(--ink); }
-  .day.off { background: var(--off); border-color: var(--off); color: #fff; } /* 라운지 휴무일: 검정이라 흰 글자 유지 */
-  .day .who { font-size: 9px; font-weight: 700; opacity: .9; }
+  .day.blank { background: none; cursor: default; }
+  /* 오늘 날짜: 꽉 찬 색 대신 은은한 링(안쪽 테두리)만 살짝 둘러서 튀지 않게 표시 */
+  .day.today { box-shadow: inset 0 0 0 2px var(--ring); }
+  .day.p1 { background: var(--p1-day); }
+  .day.p2 { background: var(--p2-day); }
+  .day.p3 { background: var(--p3-day); }
+  .day.off { background: var(--off); color: #fff; } /* 라운지 휴무일: 검정이라 흰 글자 유지 */
+  /* 이름 자리도 항상 같은 높이로 비워둬서 이름이 있든 없든 숫자가 안 움직여요 */
+  .day .who { font-size: 9px; font-weight: 700; opacity: .9; height: 11px; line-height: 11px; }
 
   /* ===== 날짜 누르면 뜨는 '이름 고르기' 작은 팝업 ===== */
   .picker {
     position: absolute; z-index: 50;
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 14px; padding: 6px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    background: var(--card);
+    border-radius: 15px; padding: 6px;
+    box-shadow: 0 12px 32px rgba(52,48,44,0.18);
     display: flex; flex-direction: column; gap: 2px;
-    min-width: 104px;
+    min-width: 112px;
   }
   .picker button {
     border: none; background: none; border-radius: 10px;
@@ -112,23 +112,23 @@
     text-align: left; cursor: pointer;
     display: flex; align-items: center; gap: 8px;
   }
-  .picker button:hover { background: var(--bg); }
+  .picker button:hover { background: var(--nav-bg); }
   .picker .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
   .picker .clear { color: var(--ink-soft); border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; }
 
   .cal-tip { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 12px; }
-  .tip { background: var(--pink-bg); border-radius: 14px; padding: 13px 18px; font-size: 12px; color: #B4547A; }
+  .tip { background: var(--accent-bg); border-radius: 16px; padding: 14px 18px; font-size: 12.5px; color: #B4547A; line-height: 1.5; }
 
   /* 로딩/에러 표시 */
   .status { text-align: center; font-size: 12px; color: var(--ink-soft); padding: 30px 0; }
-  .status.error { color: var(--p2); }
+  .status.error { color: var(--accent); }
 </style>
 </head>
 <body>
 <div class="app">
 
   <div class="header-card">
-    <span class="tag">🛍️ Lounge Duty × Notion</span>
+    <span class="tag">🛍️ Lounge Duty · Notion 연동</span>
     <h1>롯백 라운지 당번</h1>
     <p>날짜 칸을 누르면 이름을 고를 수 있어요 · 기록은 Notion DB에 저장돼서 셋이 함께 볼 수 있어요</p>
   </div>
@@ -300,9 +300,10 @@ function render() {
     else if (who === OFF) classes.push('off');               // 라운지 휴무일은 검정색
     if (key === todayKey) classes.push('today');
 
-    const whoLabel = who ? `<span class="who">${who}</span>` : '';
+    // who가 없어도 span은 항상 만들어서(내용만 비워둠) 이름 있는 칸/없는 칸의 높이를 똑같이 맞춰요
+    const whoLabel = `<span class="who">${who || ''}</span>`;
     // this = 방금 누른 그 칸(엘리먼트), event = 클릭 이벤트 → 팝업 위치/버블링 제어에 씀
-    // 날짜 숫자를 <span class="daynum">으로 감싸서, 오늘이면 이 숫자만 동그라미로 표시할 수 있게 함
+    // 날짜 숫자는 <span class="daynum">으로 감싸서 항상 같은 크기 박스 안에 고정
     html += `<div class="${classes.join(' ')}" onclick="openPicker('${key}', this, event)"><span class="daynum">${d}</span>${whoLabel}</div>`;
   }
   document.getElementById('daysGrid').innerHTML = html;
